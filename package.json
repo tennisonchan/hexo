@@ -56,7 +56,6 @@
     }
   },
   "dependencies": {
-    "gists": "^1.0.0",
-    "github-base": "^0.5.4"
+    "gists": "git://github.com/tennisonchan/gists.git#tc_fix_gists_all"
   }
 }
