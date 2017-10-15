@@ -15,9 +15,6 @@ let responseHeaderHandler = {
     if (value.indexOf('text/plain') !== -1) {
       responseHeader.value = 'text/javascript; charset=utf-8';
     }
-  },
-  'x-content-type-options': function(responseHeader) {
-
   }
 }
 
