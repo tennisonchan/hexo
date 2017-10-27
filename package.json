@@ -56,8 +56,7 @@
     }
   },
   "dependencies": {
-    "gists": "git://github.com/tennisonchan/gists.git#tc_fix_gists_all",
-    "lodash": "^4.17.4",
-    "lodash.template": "^4.4.0"
+    "gists": "git://github.com/tennisonchan/gists.git#tc_tmp",
+    "lodash": "^4.17.4"
   }
 }

@@ -35,7 +35,7 @@ function renderGistItem(filenames) {
   gistListEl.innerHTML = gistItemTemp({ filenames });
 }
 
-eventHandlers.reloadCompleted = function ({filenames}) {
+eventHandlers.reloadCompleted = function ({ filenames }) {
   renderGistItem(filenames);
 }
 

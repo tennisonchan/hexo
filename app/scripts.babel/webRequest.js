@@ -4,7 +4,7 @@ let responseHeaderHandler = {
   'content-security-policy': function(responseHeader) {
     responseHeader.value = responseHeader.value.split(';').map(function (header) {
       if (header.search('default-src') !== -1) {
-        header += ' https://*.alphasights.com https://*.cloudfront.net http://localhost:*';
+        header += ' https://*.cloudfront.net http://localhost:*';
       }
 
       return header;
@@ -18,6 +18,15 @@ let responseHeaderHandler = {
   }
 }
 
+function setCookie(responseHeaders) {
+  var setMyCookie = {
+    name: 'Set-Cookie',
+    value: 'my-cookie1=my-cookie-value1'
+  };
+  responseHeaders.push(setMyCookie);
+  return responseHeaders;
+}
+
 let callback = function (details) {
   let { responseHeaders = [] } = details;
 
@@ -28,12 +37,14 @@ let callback = function (details) {
     typeof handler === 'function' && handler(responseHeader);
   }
 
+  console.log('responseHeaders', details.url, responseHeaders);
+
   return { responseHeaders: responseHeaders };
 }
 
 let filter = {
   urls: ['*://*/*'],
-  types: [ 'script' ]
+  types: [ 'script', 'stylesheet' ]
 };
 
 chrome.webRequest.onHeadersReceived.addListener(callback, filter, ['blocking', 'responseHeaders']);

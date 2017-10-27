@@ -3,6 +3,7 @@
 import Gists from 'gists';
 import webRequest from './webRequest';
 import Storage from './storage';
+import RegExt from './regext';
 
 let popupEventHandlers = {};
 let _ports = {};
@@ -10,6 +11,7 @@ let gistsAPI = null;
 let _lastUpdate = null;
 let _filenames = [];
 let _gistsMap = {};
+let userScriptParams = {};
 
 function isAllowType(type) {
   return ['application/javascript', 'text/css'].indexOf(type) !== -1;
@@ -29,7 +31,7 @@ class Background {
     if (port.name === 'popup'){
       _ports['popup'] = port;
       port.onMessage.addListener(function(data, port) {
-        console.log('popup:onMessage:${data.event}', data, port);
+        console.log(`popup:onMessage:${data.event}`, data, port);
         if (data.event && typeof popupEventHandlers[data.event] === 'function') {
           popupEventHandlers[data.event](data);
         }
@@ -37,7 +39,13 @@ class Background {
     }
 
     if (port.name === 'content_scripts') {
-      _ports[port.sender.tab.id] = port;
+      let { url, id } = port.sender.tab;
+      _ports[id] = port;
+
+      urlTest(url).forEach(function(key) {
+        port.postMessage({ event: 'insert', data: _gistsMap[key] })
+      });
+
       port.onMessage.addListener(function(data, port) {
         console.log('content:onMessage: ', data);
       });
@@ -45,25 +53,47 @@ class Background {
   }
 }
 
+function urlTest(url) {
+  return _filenames.filter(function(key) {
+    let { include } = _gistsMap[key];
+
+    return include && new RegExt(include).test(url);
+  });
+}
+
 function transform (list) {
-  let filenames = [];
   let gistsMap = {};
 
   list.forEach(function ({ id, updated_at, description, truncated, files }) {
     Object.keys(files).map(filename => {
       let { raw_url, type } = files[filename];
 
-      if(isAllowType(type)) {
+      if (isAllowType(type)) {
         let key = `${id}/${filename}`;
-        filenames.push(key);
+        let { include } = extractUserScriptParams(description);
         gistsMap[key] = {
-          filename, raw_url, type, updated_at
+          filename, raw_url, type, updated_at, include
         }
       }
     })
   })
 
-  return { filenames, gistsMap };
+  return { gistsMap };
+}
+
+function extractUserScriptParams(str) {
+  let regex = /@(\w+)\s([^;]+);/g;
+  let map = {};
+  let arr;
+
+  while(arr = regex.exec(str)){
+    let key = arr[1];
+    let value = arr[2];
+
+    map[key] = value;
+  }
+
+  return map;
 }
 
 popupEventHandlers.init = function () {
@@ -81,13 +111,12 @@ popupEventHandlers.reload = function () {
     console.log('response', response);
 
     let { filenames, gistsMap } = transform(response);
-    _filenames = _filenames.concat(filenames);
     _gistsMap = Object.assign({}, _gistsMap, gistsMap);
+    _filenames = Object.keys(_gistsMap);
     _lastUpdate = new Date().toISOString();
 
     Storage
       .set({
-        filenames: JSON.stringify(_filenames),
         gistsMap: JSON.stringify(_gistsMap),
         lastUpdate: _lastUpdate,
       })
@@ -102,10 +131,11 @@ popupEventHandlers.reload = function () {
 
 Storage.get({ accessToken: null, lastUpdate: null, gistsMap: {} })
   .then(function({ accessToken, lastUpdate, gistsMap }) {
+    _gistsMap = JSON.parse(gistsMap);
+    _filenames = Object.keys(_gistsMap);
     _lastUpdate = lastUpdate;
-    _gistsMap = gistsMap;
     gistsAPI = new Gists({ token: accessToken });
-    new Background({ gistsMap });
+    new Background();
   });
 
 

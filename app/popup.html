@@ -2,7 +2,10 @@
 <html>
   <script type="text/x-lodash-template" id="template-gist-item">
     <% _.forEach(filenames, function(filename) { %>
-      <li><%- filename %></li>
+      <li>
+        <span class="gist-item__filename"><%- filename %></span>
+        <input class="gist-item__checkbox" type="checkbox" />
+      </li>
     <% }); %>
   </script>
   <head>

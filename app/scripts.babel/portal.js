@@ -1,0 +1,1 @@
+window.const = 42;
