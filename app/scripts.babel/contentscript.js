@@ -3,50 +3,57 @@
 const _port = chrome.runtime.connect({ name: 'content_scripts' });
 const eventHandlers = {};
 
-class NorthernBear {
+class ContentScript {
   constructor() {
-    this.const = 42;
-    console.log('NorthernBear.init');
+    console.log('ContentScript.init');
 
     _port.postMessage({ message: 'initial connection from content script' });
-    _port.onMessage.addListener(function({ event, data }) {
-      if (typeof eventHandlers[event] === 'function') {
-        eventHandlers[event](data);
-      }
+    _port.onMessage.addListener(this.caller.bind(this, eventHandlers));
+
+    window.addEventListener('message', ({ data }) => {
+      if(data.source === 'portal') { this.caller(eventHandlers, data) }
+    }, false);
+
+    eventHandlers.inject('script', {
+      src: chrome.extension.getURL('scripts/portal.js'),
+      dataset: { methods: JSON.stringify(Object.keys(eventHandlers)) }
     });
+  }
 
-    // https://api.github.com/gists?access_token=b478615c5d59a8722b31d4a831ae8c491909ad41
-    // bear.insertScript({ src: 'https://gist.githubusercontent.com/tennisonchan/69901fd5fa48cb0d03f5f3bcf48c9f63/raw/dc3e8baa458d447b39423fad9e176af41c0f0875/hello-world.js' });
-    // bear.insertScript({ src: 'https://cdn.rawgit.com/tennisonchan/69901fd5fa48cb0d03f5f3bcf48c9f63/raw/dc3e8baa458d447b39423fad9e176af41c0f0875/hello-world.js' });
+  caller (handlers, { event, data }) {
+    data = data instanceof Array? data : [data];
+    typeof handlers[event] === 'function' && handlers[event].apply(this, data);
   }
 }
 
-eventHandlers.insert = function ({ raw_url, type }) {
-  if (type.includes('javascript')) {
-    insertScript(raw_url);
-  } else if (type.includes('css')) {
-    insertStyle(raw_url);
-  }
+eventHandlers.setCookie = function(header) {
+  _port.postMessage({ event: 'setCookie', data: header });
 }
 
-function insertStyle (raw_url) {
-  console.log('insertStyle', raw_url);
-  let el = document.createElement('link');
-  if (raw_url) {
-    el.rel = 'stylesheet';
-    el.href = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
+eventHandlers.inject = function (tag, attrs, target) {
+  let el = document.createElement(tag);
+  let addAttrs = function addAttrs (el, attrs) {
+    for (let key in attrs) {
+      let value = attrs[key];
+      if (typeof value === 'object') {
+        addAttrs(el[key], value);
+      } else {
+        el[key] = value;
+      }
+    }
   }
-  document.body.appendChild(el);
+
+  addAttrs(el, attrs);
+
+  (target || document.body).appendChild(el);
 }
 
-function insertScript (raw_url) {
-  console.log('insertScript', raw_url);
-  let el = document.createElement('script');
-  if (raw_url) {
-    el.type = 'text/javascript';
-    el.src = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');;
-  }
-  document.body.appendChild(el);
+eventHandlers.sayHelloWorld = function(data) {
+  console.log('HelloWorld', data);
 }
 
-window.northernBear = new NorthernBear();
+eventHandlers.help = function() {
+  console.log('help manual');
+}
+
+new ContentScript();

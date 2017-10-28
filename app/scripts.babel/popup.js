@@ -22,21 +22,26 @@ class Popup {
 
     reloadEl.addEventListener('click', function () {
       _port.postMessage({ event: 'reload' });
-    })
+    });
 
-    Storage.get({ 'filenames': [] }).then(function({ filenames }) {
-      renderGistItem(JSON.parse(filenames));
+    Storage.get({ 'loadedFilenames': [], lastUpdated: null }).then(function({ loadedFilenames, lastUpdated }) {
+      eventHandlers.renderGistList({ loadedFilenames: JSON.parse(loadedFilenames), lastUpdated });
     })
+  }
+
+  caller (handlers, { event, data }) {
+    data = data instanceof Array? data : [data];
+    typeof handlers[event] === 'function' && handlers[event].apply(this, data);
+  }
+
+  reset() {
+    Storage.set({ 'loadedFilenames': '[]' });
   }
 }
 
-function renderGistItem(filenames) {
+eventHandlers.renderGistList = function ({ loadedFilenames, lastUpdated }) {
   let gistItemTemp = _.template(gistItemEl);
-  gistListEl.innerHTML = gistItemTemp({ filenames });
-}
-
-eventHandlers.reloadCompleted = function ({ filenames }) {
-  renderGistItem(filenames);
+  gistListEl.innerHTML = gistItemTemp({ loadedFilenames, lastUpdated });
 }
 
 window.addEventListener('load', function() {

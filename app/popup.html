@@ -1,13 +1,23 @@
 <!doctype html>
 <html>
   <script type="text/x-lodash-template" id="template-gist-item">
-    <% _.forEach(filenames, function(filename) { %>
-      <li>
-        <span class="gist-item__filename"><%- filename %></span>
-        <input class="gist-item__checkbox" type="checkbox" />
-      </li>
-    <% }); %>
+    <% if (loadedFilenames.length) { %>
+      <div class="last-updated">
+        <label>Last updated:</label>
+        <span><%- lastUpdated %></span>
+      </div>
+
+      <% _.forEach(loadedFilenames, function(data) { %>
+        <li>
+          <span class="gist-item__filename"><%- data.filename %></span>
+          <a href="<%- data.raw_url.replace(/raw\/.+/, 'edit') %>" target="_blank">Edit</a>
+        </li>
+      <% }); %>
+    <% } else { %>
+      <span>No file loaded</span>
+    <% } %>
   </script>
+
   <head>
     <meta charset="utf-8">
     <!-- build:css styles/popup-vendor.css -->
@@ -15,13 +25,16 @@
     <!-- endbower -->
     <!-- endbuild -->
     <!-- build:css styles/main.css -->
-    <link href="styles/main.css" rel="stylesheet">
+    <link href="styles/popup.css" rel="stylesheet">
     <!-- endbuild -->
   </head>
   <body>
-    <h1>'Allo, 'Allo!</h1>
+    <h1>Gist</h1>
     <div>
-        <button class="reload">reload</button>
+      <button class="reload">Reload gists</button>
+      <a href="https://gist.github.com/new" target="_blank">
+        <button class="add-gist">Add gists</button>
+      </a>
     </div>
 
     <ul class="gists-list"></ul>

@@ -1,14 +1,15 @@
 'use strict';
 
 import Gists from 'gists';
-import webRequest from './webRequest';
+import WebRequest from './webRequest';
 import Storage from './storage';
 import RegExt from './regext';
 
 let popupEventHandlers = {};
+let eventHandlers = {};
 let _ports = {};
 let gistsAPI = null;
-let _lastUpdate = null;
+let _lastUpdated = null;
 let _filenames = [];
 let _gistsMap = {};
 let userScriptParams = {};
@@ -19,37 +20,53 @@ function isAllowType(type) {
 
 class Background {
   constructor() {
-    chrome.browserAction.setBadgeText({ text: 'Claws!' });
-    chrome.browserAction.setBadgeBackgroundColor({ color: [0, 0, 0, 100] });
     chrome.runtime.onConnect.addListener(this.onRuntimeConnect.bind(this));
+
+    this.eventHandlers = eventHandlers;
+    this.webRequest = new WebRequest();
+  }
+
+  caller (handlers, { event, data }) {
+    data = data instanceof Array? data : [data];
+    typeof handlers[event] === 'function' && handlers[event].apply(this, data);
   }
 
   onRuntimeConnect (port) {
     console.log('runtime.onConnect: ', port.name);
-    port.postMessage({ message: 'initial connection from background'});
+    port.postMessage({ event: 'initial' });
 
-    if (port.name === 'popup'){
+    if (port.name === 'popup') {
       _ports['popup'] = port;
-      port.onMessage.addListener(function(data, port) {
-        console.log(`popup:onMessage:${data.event}`, data, port);
-        if (data.event && typeof popupEventHandlers[data.event] === 'function') {
-          popupEventHandlers[data.event](data);
-        }
-      });
+      port.onMessage.addListener(this.caller.bind(this, popupEventHandlers));
     }
 
     if (port.name === 'content_scripts') {
       let { url, id } = port.sender.tab;
+      let loadedFilenames = urlTest(url);
       _ports[id] = port;
 
-      urlTest(url).forEach(function(key) {
-        port.postMessage({ event: 'insert', data: _gistsMap[key] })
+      loadedFilenames.forEach(function(key) {
+        let { type, raw_url } = _gistsMap[key];
+        let src = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
+
+        if (type.includes('javascript')) {
+          port.postMessage({ event: 'inject', data: ['script', { src }] });
+        } else if (type.includes('css')) {
+          port.postMessage({ event: 'inject', data: ['link', { href: src, rel: 'stylesheet' }] });
+        }
       });
 
-      port.onMessage.addListener(function(data, port) {
-        console.log('content:onMessage: ', data);
-      });
+      Storage.set({ loadedFilenames: JSON.stringify(loadedFilenames.map(key => _gistsMap[key])) });
+      port.onMessage.addListener(this.caller.bind(this, this.eventHandlers));
     }
+  }
+
+  reset() {
+    Storage
+      .set({
+        gistsMap: '{}',
+        lastUpdated: null,
+      });
   }
 }
 
@@ -61,7 +78,7 @@ function urlTest(url) {
   });
 }
 
-function transform (list) {
+function gistTransform (list) {
   let gistsMap = {};
 
   list.forEach(function ({ id, updated_at, description, truncated, files }) {
@@ -103,41 +120,40 @@ popupEventHandlers.init = function () {
 popupEventHandlers.reload = function () {
   console.log('popup:reload');
   let opts = {};
-  if (_lastUpdate) {
+  if (_lastUpdated) {
     opts.params = ['since'];
-    opts.since = _lastUpdate;
+    opts.since = _lastUpdated;
   }
   gistsAPI.all(opts, function (_, response) {
     console.log('response', response);
 
-    let { filenames, gistsMap } = transform(response);
+    let { gistsMap } = gistTransform(response);
     _gistsMap = Object.assign({}, _gistsMap, gistsMap);
-    _filenames = Object.keys(_gistsMap);
-    _lastUpdate = new Date().toISOString();
 
     Storage
       .set({
         gistsMap: JSON.stringify(_gistsMap),
-        lastUpdate: _lastUpdate,
-      })
-      .then(() => {
-        _ports.popup.postMessage({
-          event: 'reloadCompleted',
-          data: { filenames: _filenames }
-        })
+        lastUpdated: new Date().toISOString(),
       })
   })
 }
 
-Storage.get({ accessToken: null, lastUpdate: null, gistsMap: {} })
-  .then(function({ accessToken, lastUpdate, gistsMap }) {
+eventHandlers.modifyHeaders = function () {
+  this.webRequest.registerHandler.apply(this, arguments);
+}
+
+eventHandlers.setCookie = function(header) {
+  this.webRequest.addHeader(header);
+}
+
+Storage.get({ accessToken: null, lastUpdated: null, gistsMap: {} })
+  .then(function({ accessToken, lastUpdated, gistsMap }) {
     _gistsMap = JSON.parse(gistsMap);
     _filenames = Object.keys(_gistsMap);
-    _lastUpdate = lastUpdate;
+    _lastUpdated = lastUpdated;
     gistsAPI = new Gists({ token: accessToken });
-    new Background();
+    window.background = new Background();
   });
-
 
 chrome.runtime.onInstalled.addListener(details => {
   console.log('previousVersion', details.previousVersion);

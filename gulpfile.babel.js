@@ -98,6 +98,7 @@ gulp.task('babel', () => {
     'background.js',
     'chromereload.js',
     'contentscript.js',
+    'portal.js',
     'options.js',
     'popup.js',
   ].map(file => (

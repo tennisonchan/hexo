@@ -12,7 +12,7 @@ class Storage {
         let handler = onchangeHandlers[variable];
         payload[variable] = changes[variable].newValue;
         if (typeof handler === 'function') {
-          handler(payload)
+          handler(payload);
         }
       }
     });
