@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import Storage from './storage';
+import { urlTest } from './userScript';
 
 const reloadEl = document.querySelector('.reload');
 const gistListEl = document.querySelector('.gists-list');
@@ -12,7 +13,6 @@ const eventHandlers = {};
 
 class Popup {
   constructor() {
-    _port.postMessage({ event: 'init' });
     _port.onMessage.addListener(function({ event, data }, port) {
       console.log(`onMessage:${event}`, data, port);
       if (typeof eventHandlers[event] === 'function') {
@@ -24,8 +24,11 @@ class Popup {
       _port.postMessage({ event: 'reload' });
     });
 
-    Storage.get({ 'loadedFilenames': [], lastUpdated: null }).then(function({ loadedFilenames, lastUpdated }) {
-      eventHandlers.renderGistList({ loadedFilenames: JSON.parse(loadedFilenames), lastUpdated });
+    Storage.get({ gistsMap: '{}', lastUpdated: null }).then(function({ gistsMap, lastUpdated }) {
+      let _gistMap = JSON.parse(gistsMap);
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        eventHandlers.renderGistList({ files: urlTest(_gistMap, tabs[0].url).map(key => _gistMap[key]), lastUpdated });
+      });
     })
   }
 
@@ -33,15 +36,11 @@ class Popup {
     data = data instanceof Array? data : [data];
     typeof handlers[event] === 'function' && handlers[event].apply(this, data);
   }
-
-  reset() {
-    Storage.set({ 'loadedFilenames': '[]' });
-  }
 }
 
-eventHandlers.renderGistList = function ({ loadedFilenames, lastUpdated }) {
+eventHandlers.renderGistList = function ({ files, lastUpdated }) {
   let gistItemTemp = _.template(gistItemEl);
-  gistListEl.innerHTML = gistItemTemp({ loadedFilenames, lastUpdated });
+  gistListEl.innerHTML = gistItemTemp({ files, lastUpdated });
 }
 
 window.addEventListener('load', function() {

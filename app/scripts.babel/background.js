@@ -3,7 +3,7 @@
 import Gists from 'gists';
 import WebRequest from './webRequest';
 import Storage from './storage';
-import RegExt from './regext';
+import { urlTest, gistTransform } from './userScript';
 
 let popupEventHandlers = {};
 let eventHandlers = {};
@@ -12,15 +12,16 @@ let gistsAPI = null;
 let _lastUpdated = null;
 let _filenames = [];
 let _gistsMap = {};
+let urlMap = {};
 let userScriptParams = {};
-
-function isAllowType(type) {
-  return ['application/javascript', 'text/css'].indexOf(type) !== -1;
-}
 
 class Background {
   constructor() {
     chrome.runtime.onConnect.addListener(this.onRuntimeConnect.bind(this));
+    chrome.tabs.onRemoved.addListener(function (id) {
+      console.log('onRemoved', id);
+      delete _ports[id];
+    });
 
     this.eventHandlers = eventHandlers;
     this.webRequest = new WebRequest();
@@ -42,79 +43,27 @@ class Background {
 
     if (port.name === 'content_scripts') {
       let { url, id } = port.sender.tab;
-      let loadedFilenames = urlTest(url);
       _ports[id] = port;
 
-      loadedFilenames.forEach(function(key) {
+      urlTest(_gistsMap, url).forEach(function(key) {
         let { type, raw_url } = _gistsMap[key];
-        let src = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
+        let url = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
 
         if (type.includes('javascript')) {
-          port.postMessage({ event: 'inject', data: ['script', { src }] });
+          port.postMessage({ event: 'inject', data: ['script', { src: url }] });
         } else if (type.includes('css')) {
-          port.postMessage({ event: 'inject', data: ['link', { href: src, rel: 'stylesheet' }] });
+          port.postMessage({ event: 'inject', data: ['link', { href: url, rel: 'stylesheet' }] });
         }
       });
 
-      Storage.set({ loadedFilenames: JSON.stringify(loadedFilenames.map(key => _gistsMap[key])) });
       port.onMessage.addListener(this.caller.bind(this, this.eventHandlers));
     }
   }
 
-  reset() {
+  reset(data) {
     Storage
-      .set({
-        gistsMap: '{}',
-        lastUpdated: null,
-      });
+      .set(data);
   }
-}
-
-function urlTest(url) {
-  return _filenames.filter(function(key) {
-    let { include } = _gistsMap[key];
-
-    return include && new RegExt(include).test(url);
-  });
-}
-
-function gistTransform (list) {
-  let gistsMap = {};
-
-  list.forEach(function ({ id, updated_at, description, truncated, files }) {
-    Object.keys(files).map(filename => {
-      let { raw_url, type } = files[filename];
-
-      if (isAllowType(type)) {
-        let key = `${id}/${filename}`;
-        let { include } = extractUserScriptParams(description);
-        gistsMap[key] = {
-          filename, raw_url, type, updated_at, include
-        }
-      }
-    })
-  })
-
-  return { gistsMap };
-}
-
-function extractUserScriptParams(str) {
-  let regex = /@(\w+)\s([^;]+);/g;
-  let map = {};
-  let arr;
-
-  while(arr = regex.exec(str)){
-    let key = arr[1];
-    let value = arr[2];
-
-    map[key] = value;
-  }
-
-  return map;
-}
-
-popupEventHandlers.init = function () {
-  console.log('popup:init');
 }
 
 popupEventHandlers.reload = function () {
@@ -142,11 +91,11 @@ eventHandlers.modifyHeaders = function () {
   this.webRequest.registerHandler.apply(this, arguments);
 }
 
-eventHandlers.setCookie = function(header) {
-  this.webRequest.addHeader(header);
+eventHandlers.setCookie = function(value) {
+  this.webRequest.addHeader({ name: 'Set-cookie', value });
 }
 
-Storage.get({ accessToken: null, lastUpdated: null, gistsMap: {} })
+Storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
   .then(function({ accessToken, lastUpdated, gistsMap }) {
     _gistsMap = JSON.parse(gistsMap);
     _filenames = Object.keys(_gistsMap);

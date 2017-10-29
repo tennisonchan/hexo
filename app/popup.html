@@ -1,13 +1,13 @@
 <!doctype html>
 <html>
   <script type="text/x-lodash-template" id="template-gist-item">
-    <% if (loadedFilenames.length) { %>
-      <div class="last-updated">
-        <label>Last updated:</label>
-        <span><%- lastUpdated %></span>
-      </div>
+    <div class="last-updated">
+      <label>Last updated:</label>
+      <span><%- lastUpdated %></span>
+    </div>
 
-      <% _.forEach(loadedFilenames, function(data) { %>
+    <% if (files.length) { %>
+      <% _.forEach(files, function(data) { %>
         <li>
           <span class="gist-item__filename"><%- data.filename %></span>
           <a href="<%- data.raw_url.replace(/raw\/.+/, 'edit') %>" target="_blank">Edit</a>

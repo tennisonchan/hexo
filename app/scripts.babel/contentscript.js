@@ -26,8 +26,8 @@ class ContentScript {
   }
 }
 
-eventHandlers.setCookie = function(header) {
-  _port.postMessage({ event: 'setCookie', data: header });
+eventHandlers.setCookie = function(headerValue) {
+  _port.postMessage({ event: 'setCookie', data: headerValue });
 }
 
 eventHandlers.inject = function (tag, attrs, target) {
