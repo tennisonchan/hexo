@@ -47,7 +47,12 @@ class Background {
       _ports[id] = port;
 
       urlTest(_gistsMap, url).forEach(function (id) {
-        let { files } = _gistsMap[id];
+        let { files, require } = _gistsMap[id];
+
+        if (require) {
+          port.postMessage({ event: 'inject', data: ['script', { src: require }] });
+        }
+
         files.forEach(function (file) {
           let { type, raw_url } = file;
           let url = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');

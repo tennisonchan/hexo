@@ -29,15 +29,16 @@ function isAllowType(type) {
   return ['application/javascript', 'text/css'].indexOf(type) !== -1;
 }
 
-function gistTransform (list) {
+function gistTransform (list = []) {
   let gistsMap = {};
 
-  list.forEach(function ({ id, updated_at, description, truncated, files }) {
+  list.forEach(function ({ id, description, files }) {
     let allowFiles = Object.keys(files).filter(name => isAllowType(files[name].type));
-    let { include } = extractUserScriptParams(description);
+    let { include, require } = extractUserScriptParams(description);
     if (include && allowFiles.length) {
       let gist = {};
       gist.include = include;
+      gist.require = require;
       gist.files = allowFiles.map(name => {
         let { filename, raw_url, type } = files[name];
         return { filename, raw_url, type }
