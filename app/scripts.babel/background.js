@@ -25,6 +25,7 @@ class Background {
 
     this.eventHandlers = eventHandlers;
     this.webRequest = new WebRequest();
+    this.storage = Storage;
   }
 
   caller (handlers, { event, data }) {
@@ -45,15 +46,17 @@ class Background {
       let { url, id } = port.sender.tab;
       _ports[id] = port;
 
-      urlTest(_gistsMap, url).forEach(function(key) {
-        let { type, raw_url } = _gistsMap[key];
-        let url = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
-
-        if (type.includes('javascript')) {
-          port.postMessage({ event: 'inject', data: ['script', { src: url }] });
-        } else if (type.includes('css')) {
-          port.postMessage({ event: 'inject', data: ['link', { href: url, rel: 'stylesheet' }] });
-        }
+      urlTest(_gistsMap, url).forEach(function (id) {
+        let { files } = _gistsMap[id];
+        files.forEach(function (file) {
+          let { type, raw_url } = file;
+          let url = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
+          if (type.includes('javascript')) {
+            port.postMessage({ event: 'inject', data: ['script', { src: url }] });
+          } else if (type.includes('css')) {
+            port.postMessage({ event: 'inject', data: ['link', { href: url, rel: 'stylesheet' }] });
+          }
+        })
       });
 
       port.onMessage.addListener(this.caller.bind(this, this.eventHandlers));
@@ -75,9 +78,7 @@ popupEventHandlers.reload = function () {
   }
   gistsAPI.all(opts, function (_, response) {
     console.log('response', response);
-
-    let { gistsMap } = gistTransform(response);
-    _gistsMap = Object.assign({}, _gistsMap, gistsMap);
+    _gistsMap = Object.assign(_gistsMap, gistTransform(response));
 
     Storage
       .set({

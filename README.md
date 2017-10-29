@@ -1,6 +1,7 @@
 ## To-Do
 - [x] Fix the "current loaded files"
-- [ ] Fix issue of removing script from gist
+- [x] Fix issue of loading removed script on gist
+- [ ] Update changes after reload
 - [ ] Impletment `@require` to pre-load lib like jQuery
 
 ## Things you can do via Gist

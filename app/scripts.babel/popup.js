@@ -25,9 +25,12 @@ class Popup {
     });
 
     Storage.get({ gistsMap: '{}', lastUpdated: null }).then(function({ gistsMap, lastUpdated }) {
-      let _gistMap = JSON.parse(gistsMap);
+      let _gistsMap = JSON.parse(gistsMap);
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        eventHandlers.renderGistList({ files: urlTest(_gistMap, tabs[0].url).map(key => _gistMap[key]), lastUpdated });
+        let files = urlTest(_gistsMap, tabs[0].url).reduce(function(acc, id) {
+          return acc.concat(_gistsMap[id].files);
+        }, []);
+        eventHandlers.renderGistList({ files, lastUpdated });
       });
     })
   }

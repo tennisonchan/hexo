@@ -33,20 +33,21 @@ function gistTransform (list) {
   let gistsMap = {};
 
   list.forEach(function ({ id, updated_at, description, truncated, files }) {
-    Object.keys(files).map(filename => {
-      let { raw_url, type } = files[filename];
+    let allowFiles = Object.keys(files).filter(name => isAllowType(files[name].type));
+    let { include } = extractUserScriptParams(description);
+    if (include && allowFiles.length) {
+      let gist = {};
+      gist.include = include;
+      gist.files = allowFiles.map(name => {
+        let { filename, raw_url, type } = files[name];
+        return { filename, raw_url, type }
+      });
 
-      if (isAllowType(type)) {
-        let key = `${id}/${filename}`;
-        let { include } = extractUserScriptParams(description);
-        gistsMap[key] = {
-          filename, raw_url, type, updated_at, include
-        }
-      }
-    })
+      gistsMap[id] = gist;
+    }
   })
 
-  return { gistsMap };
+  return gistsMap;
 }
 
 exports = module.exports = { urlTest, gistTransform };
