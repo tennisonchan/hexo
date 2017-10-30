@@ -99,6 +99,10 @@ eventHandlers.setCookie = function(value) {
   this.webRequest.addHeader({ name: 'Set-cookie', value });
 }
 
+Storage.onchange(['accessToken'], function(accessToken) {
+  gistsAPI = new Gists({ token: accessToken });
+});
+
 Storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
   .then(function({ accessToken, lastUpdated, gistsMap }) {
     _gistsMap = JSON.parse(gistsMap);
