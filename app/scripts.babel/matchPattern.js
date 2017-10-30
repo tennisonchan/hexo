@@ -1,18 +1,34 @@
-const matchPattern = (/^(?:(\*|http|https|file|ftp|app|chrome-extension):\/\/([^\/]+|)\/?(.*))$/i);
+const matchPattern = new RegExp('^' +
+'(?:' +
+    '([^:/?#.]+)' +                  // scheme - ignore special characters
+                                     // used by other URL parts such as :,
+                                     // ?, /, #, and .
+':)?' +
+'(?://' +
+    '(?:([^/?#]*)@)?' +              // userInfo
+    '([^/#?]*?)' +                   // domain
+    '(?::([0-9]+))?' +               // port
+    '(?=[/#?]|$)' +                  // authority-terminating character
+')?' +
+'([^?#]+)?' +                        // path
+'(?:\\?([^#]*))?' +                  // query
+'(?:#(.*))?' +                       // fragment
+'$');
 
 function matchPatternToRegExp(pattern) {
   if (pattern === '<all_urls>') {
-    return (/^(?:https?|file|ftp|app):\/\//);
+    return (/^(?:https?|file|ftp|app|chrome-extension):\/\//);
   }
   const match = matchPattern.exec(pattern);
   if (!match) {
     throw new TypeError(`"${ pattern }" is not a valid MatchPattern`);
   }
-  const [ , scheme, host, path, ] = match;
+  const [ , scheme, userInfo, domain, port, path, query, fragment ] = match;
+  console.log('match', match);
   return new RegExp('^(?:'
-    + (scheme === '*' ? 'https?' : escape(scheme)) + ':\\/\\/'
-    + (host === '*' ? '[^\\/]*' : escape(host).replace(/^\*\./g, '(?:[^\\/]+)?'))
-    + (path ? (path == '*' ? '(?:\\/.*)?' : ('\\/' + escape(path).replace(/\*/g, '.*'))) : '\\/?')
+    + (scheme === '*' ? '(https?|file|ftp|app|chrome-extension)' : escape(scheme)) + ':\\/\\/'
+    + (domain === '*' ? '[^\\/]*' : escape(domain).replace(/^\*\./g, '(?:[^\\/]+)?'))
+    + (path ? (path == '*' ? '(?:\\/.*)?' : (escape(path).replace(/\*/g, '.*'))) : '\\/?')
     + ')$');
 }
 
