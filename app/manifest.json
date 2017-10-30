@@ -22,7 +22,8 @@
     "http://*/*",
     "https://*/*",
     "background",
-    "storage"
+    "storage",
+    "identity"
   ],
   "options_ui": {
     "page": "options.html"
