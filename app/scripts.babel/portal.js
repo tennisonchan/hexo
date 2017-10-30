@@ -8,13 +8,13 @@ let postMessage = function (event, data) {
   window.postMessage({ source, event, data }, origin);
 }
 
-class GearBox {
+class Hexo {
   constructor() {
-    console.log('GearBox.init');
+    console.log('Hexo.init');
     methods.forEach((method) => {
       this[method] = postMessage.bind(this, method);
     });
   }
 }
 
-window.gearBox = new GearBox();
+window.hexo = new Hexo();

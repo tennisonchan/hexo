@@ -45,7 +45,7 @@
       "19": "images/icon.png",
       "38": "images/icon.png"
     },
-    "default_title": "northern bear",
+    "default_title": "Hexo",
     "default_popup": "popup.html"
   },
   "web_accessible_resources": [ "scripts/portal.js" ]
