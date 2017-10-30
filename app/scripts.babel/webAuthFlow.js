@@ -1,25 +1,30 @@
 'use strict';
 
-const DEFAULT_SCOPE = ['gist', 'user', 'repo'].join(' ');
-
 class WebAuthFlow {
-  constructor(chrome, storage) {
-    this.identity = chrome.identity;
+  constructor({ runtime, identity }, storage) {
+    let { oauth2: { client_id, scopes, provider, base_url } } = runtime.getManifest();
+    let clientId = encodeURIComponent(client_id);
+    let scope = encodeURIComponent(scopes.join(' '));
+    let redirectUri = identity.getRedirectURL(provider);
+
+    this.identity = identity;
+    this.runtime = runtime;
     this.storage = storage;
-    this.redirectUri = `https://${chrome.runtime.id}.chromiumapp.org`;
+    this.url = `${base_url}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
   }
 
-  getAuthUrl({ clientId, scope = DEFAULT_SCOPE }) {
-    return `https://github.com/login/oauth/authorize/?client_id=${clientId}&redirect_uri=${this.redirectUri}&scope=${scope}`;
-  }
-
-  launch(params) {
+  launch() {
     if (!this.identity) { return false; }
 
     this.identity.launchWebAuthFlow({
-      url: this.getAuthUrl(params),
+      url: this.url,
       interactive: true,
     }, redirectUrl => {
+      if (this.runtime.lastError) {
+        console.error(this.runtime.lastError.message);
+        return false;
+      }
+      console.log('redirectUrl', redirectUrl);
       redirectUrl && redirectUrl
         .substr(redirectUrl.indexOf('#') + 1)
         .split('&')

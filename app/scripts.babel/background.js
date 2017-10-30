@@ -5,7 +5,6 @@ import WebRequest from './webRequest';
 import Storage from './storage';
 import { urlTest, gistTransform } from './userScript';
 import WebAuthFlow from './webAuthFlow';
-import ENV from './env';
 
 let popupEventHandlers = {};
 let eventHandlers = {};
@@ -108,8 +107,5 @@ Storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
 
 chrome.runtime.onInstalled.addListener(details => {
   console.log('previousVersion', details.previousVersion);
-  new WebAuthFlow(chrome, Storage).launch({
-    clientId: ENV.CLIENT_ID,
-    scope: 'gist'
-  });
+  new WebAuthFlow(chrome, Storage).launch();
 });

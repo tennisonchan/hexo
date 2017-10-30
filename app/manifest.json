@@ -25,6 +25,14 @@
     "storage",
     "identity"
   ],
+  "oauth2": {
+    "client_id": "308105505401-60mea7qn3q4dj9vonbrhninkate9a1gr.apps.googleusercontent.com",
+    "base_url": "https://github.com/login/oauth/authorize",
+    "provider": "github",
+    "scopes": [
+      "gist"
+    ]
+  },
   "options_ui": {
     "page": "options.html"
   },
