@@ -18,4 +18,5 @@ A chrome extension that runs your gist script on page equipped with all powerful
 - [x] Fix issue of loading removed script on gist
 - [x] Impletment `@require` to pre-load lib like jQuery
 - [x] Fix RegExt for path
-- [ ] Update changes after reload
+- [x] Use match pattern for url instead
+- [ ] Update popup panel after reload

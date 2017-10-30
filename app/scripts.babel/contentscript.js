@@ -7,17 +7,11 @@ class ContentScript {
   constructor() {
     console.log('ContentScript.init');
 
-    _port.postMessage({ message: 'initial connection from content script' });
     _port.onMessage.addListener(this.caller.bind(this, eventHandlers));
 
     window.addEventListener('message', ({ data }) => {
       if(data.source === 'portal') { this.caller(eventHandlers, data) }
     }, false);
-
-    eventHandlers.inject('script', {
-      src: chrome.extension.getURL('scripts/portal.js'),
-      dataset: { methods: JSON.stringify(Object.keys(eventHandlers)) }
-    });
   }
 
   caller (handlers, { event, data }) {
@@ -30,7 +24,9 @@ eventHandlers.setCookie = function(headerValue) {
   _port.postMessage({ event: 'setCookie', data: headerValue });
 }
 
-eventHandlers.inject = function (tag, attrs, target) {
+eventHandlers.inject = inject;
+
+function inject (tag, attrs, target) {
   let el = document.createElement(tag);
   let addAttrs = function addAttrs (el, attrs) {
     for (let key in attrs) {
@@ -55,5 +51,10 @@ eventHandlers.sayHelloWorld = function(data) {
 eventHandlers.help = function() {
   console.log('help manual');
 }
+
+inject('script', {
+  src: chrome.extension.getURL('scripts/portal.js'),
+  dataset: { methods: JSON.stringify(Object.keys(eventHandlers)) }
+});
 
 new ContentScript();

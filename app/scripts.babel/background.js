@@ -16,10 +16,7 @@ let _gistsMap = {};
 class Background {
   constructor() {
     chrome.runtime.onConnect.addListener(this.onRuntimeConnect.bind(this));
-    chrome.tabs.onRemoved.addListener(function (id) {
-      console.log('onRemoved', id);
-      delete _ports[id];
-    });
+    chrome.tabs.onRemoved.addListener(id => delete _ports[id]);
 
     this.eventHandlers = eventHandlers;
     this.webRequest = new WebRequest();
@@ -64,11 +61,6 @@ class Background {
 
       port.onMessage.addListener(this.caller.bind(this, this.eventHandlers));
     }
-  }
-
-  reset(data) {
-    Storage
-      .set(data);
   }
 }
 

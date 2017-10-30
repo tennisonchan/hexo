@@ -1,5 +1,7 @@
 'use strict';
 
+import $ from 'jquery';
+
 const source = 'portal';
 const origin = window.location.origin;
 const methods = JSON.parse(document.currentScript.dataset.methods || {});
@@ -14,6 +16,8 @@ class Hexo {
     methods.forEach((method) => {
       this[method] = postMessage.bind(this, method);
     });
+
+    this.$ = $;
   }
 }
 
