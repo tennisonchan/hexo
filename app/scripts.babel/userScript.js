@@ -1,12 +1,12 @@
 'use strict';
 
-import RegExt from './regext';
+import { matchPatternToRegExp } from './matchPattern';
 
 function urlTest(gistsMap, url) {
   return Object.keys(gistsMap).filter(function(key) {
     let { include } = gistsMap[key];
 
-    return include && new RegExt(include).test(url);
+    return include && matchPatternToRegExp(include).test(url);
   });
 }
 

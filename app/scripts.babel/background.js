@@ -12,8 +12,6 @@ let gistsAPI = null;
 let _lastUpdated = null;
 let _filenames = [];
 let _gistsMap = {};
-let urlMap = {};
-let userScriptParams = {};
 
 class Background {
   constructor() {
