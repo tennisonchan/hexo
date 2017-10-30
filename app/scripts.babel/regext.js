@@ -1,11 +1,11 @@
-const regexExtract = new RegExp('\/(.*)\/([gimuy]+)?');
+const regexExtract = /\/([-a-zA-Z0-9@:%_\+.~#?&\/\/=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&\/\/=*]*)?)\/([gimuy]+)?/;
 
-class RegExConverter extends RegExp {
+class RegExt extends RegExp {
   constructor(input) {
     if (typeof input === 'string' || input instanceof String) {
       if (regexExtract.test(input)) {
         let parts = regexExtract.exec(input);
-        super(parts[1], parts[2] || '')
+        super(parts[1], parts[3] || '');
       } else {
         super(input);
       }
@@ -19,4 +19,4 @@ class RegExConverter extends RegExp {
   }
 }
 
-exports = module.exports = RegExConverter;
+exports = module.exports = RegExt;
