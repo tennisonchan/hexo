@@ -7,6 +7,7 @@ import { urlTest, gistTransform } from './userScript';
 import WebAuthFlow from './webAuthFlow';
 import ENV from './env';
 
+const storage = new Storage(chrome);
 let popupEventHandlers = {};
 let eventHandlers = {};
 let _ports = {};
@@ -22,7 +23,6 @@ class Background {
 
     this.eventHandlers = eventHandlers;
     this.webRequest = new WebRequest();
-    this.storage = Storage;
   }
 
   caller (handlers, { event, data }) {
@@ -77,7 +77,7 @@ popupEventHandlers.reload = function () {
     console.log('response', response);
     _gistsMap = Object.assign(_gistsMap, gistTransform(response));
 
-    Storage
+    storage
       .set({
         gistsMap: JSON.stringify(_gistsMap),
         lastUpdated: new Date().toISOString(),
@@ -93,12 +93,12 @@ eventHandlers.setCookie = function(value) {
   this.webRequest.addHeader({ name: 'Set-cookie', value });
 }
 
-Storage.onchange(['accessToken'], function(accessToken) {
+storage.onchange(['accessToken'], function({ accessToken }) {
   gistsAPI = new Gists({ token: accessToken });
 });
 
-Storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
-  .then(function({ accessToken, lastUpdated, gistsMap }) {
+storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
+  .then(function ({ accessToken, lastUpdated, gistsMap }) {
     _gistsMap = JSON.parse(gistsMap);
     _filenames = Object.keys(_gistsMap);
     _lastUpdated = lastUpdated;
@@ -108,5 +108,12 @@ Storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
 
 chrome.runtime.onInstalled.addListener(details => {
   console.log('previousVersion', details.previousVersion);
-  new WebAuthFlow(chrome, Storage).launch();
+  storage.get({ accessToken: null })
+  .then(function ({ accessToken }) {
+    if (!accessToken) {
+      new WebAuthFlow(chrome, storage).launch({
+        client_secret: ENV.client_secret
+      });
+    }
+  });
 });

@@ -1,15 +1,15 @@
 'use strict';
 
-let onchangeHandlers = {};
-let runtime = chrome.runtime;
-let storageArea = chrome.storage.sync;
-
 class Storage {
-  constructor() {
-    chrome.storage.onChanged.addListener(function (changes) {
+  constructor({ runtime, storage }) {
+    this.onchangeHandlers = {};
+    this.runtime = runtime;
+    this.storageArea = storage.sync;
+
+    storage.onChanged.addListener(changes => {
       for (let variable in changes) {
         let payload = {};
-        let handler = onchangeHandlers[variable];
+        let handler = this.onchangeHandlers[variable];
         payload[variable] = changes[variable].newValue;
         if (typeof handler === 'function') {
           handler(payload);
@@ -19,17 +19,17 @@ class Storage {
   }
 
   onchange (selectors, callback) {
-    selectors.forEach(function (selector) {
-      onchangeHandlers[selector] = callback;
+    selectors.forEach(selector => {
+      this.onchangeHandlers[selector] = callback;
     });
   }
 
   set (data) {
-    return new Promise(function (resolve, reject) {
-      storageArea.set(data, function () {
-        if (runtime.lastError) {
-          console.error('Error ocurred when setting value');
-          reject(data, runtime.lastError);
+    return new Promise((resolve, reject) => {
+      this.storageArea.set(data, () => {
+        if (this.runtime.lastError) {
+          console.error(this.runtime.lastError.runtime.lastError);
+          reject(data, this.runtime.lastError);
         } else {
           resolve(data);
         }
@@ -38,11 +38,11 @@ class Storage {
   }
 
   get (key) {
-    return new Promise(function (resolve, reject) {
-      storageArea.get(key, function (data) {
-        if (runtime.lastError) {
-          console.error('Error ocurred when getting value');
-          reject(key, runtime.lastError);
+    return new Promise((resolve, reject) => {
+      this.storageArea.get(key, data => {
+        if (this.runtime.lastError) {
+          console.error(this.runtime.lastError.runtime.lastError);
+          reject(key, this.runtime.lastError);
         } else {
           resolve(data);
         }
@@ -53,10 +53,10 @@ class Storage {
   update (key, updateFunc, callback) {
     callback = callback || function () {};
 
-    return this.get(key).then(function (data) {
+    return this.get(key).then(data => {
       return this.set(updateFunc(data)).then(callback);
     });
   }
 }
 
-exports = module.exports = new Storage();
+exports = module.exports = Storage;

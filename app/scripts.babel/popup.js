@@ -7,6 +7,7 @@ import { urlTest } from './userScript';
 const reloadEl = document.querySelector('.reload');
 const gistListEl = document.querySelector('.gists-list');
 const gistItemEl = document.querySelector('#template-gist-item').innerHTML;
+const storage = new Storage(chrome);
 
 const _port = chrome.runtime.connect({ name: 'popup' });
 const eventHandlers = {};
@@ -24,7 +25,7 @@ class Popup {
       _port.postMessage({ event: 'reload' });
     });
 
-    Storage.get({ gistsMap: '{}', lastUpdated: null }).then(function({ gistsMap, lastUpdated }) {
+    storage.get({ gistsMap: '{}', lastUpdated: null }).then(function({ gistsMap, lastUpdated }) {
       let _gistsMap = JSON.parse(gistsMap);
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         let files = urlTest(_gistsMap, tabs[0].url).reduce(function(acc, id) {

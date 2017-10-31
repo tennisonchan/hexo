@@ -38,7 +38,7 @@ class WebRequest {
 
     responseHeaders = responseHeaders.concat(this.additionHeaders);
 
-    console.log('responseHeader', details.url, responseHeaders);
+    // console.log('responseHeader', details.url, responseHeaders);
 
     return { responseHeaders: responseHeaders };
   }
@@ -48,7 +48,7 @@ class WebRequest {
   }
 
   addHeader(newHeader) {
-    console.log('WebRequest.addHeader', newHeader);
+    // console.log('WebRequest.addHeader', newHeader);
 
     if (newHeader.name && newHeader.value) {
       this.additionHeaders.push(newHeader);
