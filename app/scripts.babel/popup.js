@@ -4,49 +4,49 @@ import _ from 'lodash';
 import Storage from './storage';
 import { urlTest } from './userScript';
 
+let eventHandlers = {};
 const reloadEl = document.querySelector('.reload');
 const gistListEl = document.querySelector('.gists-list');
 const gistItemEl = document.querySelector('#template-gist-item').innerHTML;
-const storage = new Storage(chrome);
-
-const _port = chrome.runtime.connect({ name: 'popup' });
-const eventHandlers = {};
 
 class Popup {
-  constructor() {
-    _port.onMessage.addListener(function({ event, data }, port) {
-      console.log(`onMessage:${event}`, data, port);
-      if (typeof eventHandlers[event] === 'function') {
-        eventHandlers[event](data);
-      }
-    });
+  constructor(storage) {
+    this.gistsMap = null;
+    this.lastUpdated = null;
+    this.port = chrome.runtime.connect({ name: 'popup' });
+    this.port.onMessage.addListener(this.caller.bind(this, eventHandlers));
 
-    reloadEl.addEventListener('click', function () {
-      _port.postMessage({ event: 'reload' });
-    });
-
-    storage.get({ gistsMap: '{}', lastUpdated: null }).then(function({ gistsMap, lastUpdated }) {
-      let _gistsMap = JSON.parse(gistsMap);
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        let files = urlTest(_gistsMap, tabs[0].url).reduce(function(acc, id) {
-          return acc.concat(_gistsMap[id].files);
-        }, []);
-        eventHandlers.renderGistList({ files, lastUpdated });
-      });
-    })
+    storage.get({ gistsMap: '{}', lastUpdated: null }).then(this.updateGistList.bind(this));
+    storage.onchange(['gistsMap', 'lastUpdated'], this.updateGistList.bind(this));
+    reloadEl.addEventListener('click', () => this.port.postMessage({ event: 'reload' }));
   }
 
   caller (handlers, { event, data }) {
     data = data instanceof Array? data : [data];
     typeof handlers[event] === 'function' && handlers[event].apply(this, data);
   }
+
+  updateGistList({ gistsMap, lastUpdated }) {
+    if (gistsMap) {
+      this.gistsMap = JSON.parse(gistsMap);
+    }
+    if (lastUpdated) {
+      this.lastUpdated = lastUpdated;
+    }
+
+    this.renderGistList(this.gistsMap, this.lastUpdated);
+  }
+
+  renderGistList(gistsMap, lastUpdated) {
+    console.log('lastUpdated', lastUpdated);
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      let files = urlTest(gistsMap, tabs[0].url).reduce(function (acc, id) {
+        return acc.concat(gistsMap[id].files);
+      }, []);
+      let gistItemTemp = _.template(gistItemEl);
+      gistListEl.innerHTML = gistItemTemp({ files, lastUpdated });
+    });
+  }
 }
 
-eventHandlers.renderGistList = function ({ files, lastUpdated }) {
-  let gistItemTemp = _.template(gistItemEl);
-  gistListEl.innerHTML = gistItemTemp({ files, lastUpdated });
-}
-
-window.addEventListener('load', function() {
-  window.popup = new Popup();
-})
+window.popup = new Popup(new Storage(chrome));

@@ -13,7 +13,7 @@ A chrome extension that runs your gist script on page equipped with all powerful
 - [x] Inject styles and scripts
 
 ## To-Do
-- [ ] Update popup panel after reload
+- [x] Update popup panel after reload
 - [x] Loading gist scripts before portal
 - [x] Fix the "current loaded files"
 - [x] Fix issue of loading removed script on gist
