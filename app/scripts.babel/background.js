@@ -5,6 +5,7 @@ import WebRequest from './webRequest';
 import Storage from './storage';
 import { urlTest, gistTransform } from './userScript';
 import WebAuthFlow from './webAuthFlow';
+import ENV from './env';
 
 let popupEventHandlers = {};
 let eventHandlers = {};

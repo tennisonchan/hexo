@@ -26,8 +26,7 @@
     "identity"
   ],
   "oauth2": {
-    "client_id": "308105505401-60mea7qn3q4dj9vonbrhninkate9a1gr.apps.googleusercontent.com",
-    "base_url": "https://github.com/login/oauth/authorize",
+    "client_id": "a3856991053559f42763",
     "provider": "github",
     "scopes": [
       "gist"

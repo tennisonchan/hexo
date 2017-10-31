@@ -1,41 +1,52 @@
 'use strict';
 
+const accessTokenUrl = 'https://github.com/login/oauth/access_token';
+const authorizeUrl = 'https://github.com/login/oauth/authorize';
+
+function getUrlParameter(url, name) {
+  let results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(url);
+  return results === null ? '' : results[1];
+}
+
 class WebAuthFlow {
   constructor({ runtime, identity }, storage) {
-    let { oauth2: { client_id, scopes, provider, base_url } } = runtime.getManifest();
-    let clientId = encodeURIComponent(client_id);
-    let scope = encodeURIComponent(scopes.join(' '));
-    let redirectUri = identity.getRedirectURL(provider);
-
     this.identity = identity;
     this.runtime = runtime;
     this.storage = storage;
-    this.url = `${base_url}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
   }
 
-  launch() {
+  launch({ client_secret }) {
     if (!this.identity) { return false; }
 
+    let { oauth2: { client_id, scopes, provider } } = this.runtime.getManifest();
+    let redirectUri = this.identity.getRedirectURL(provider);
+
     this.identity.launchWebAuthFlow({
-      url: this.url,
-      interactive: true,
+      url: `${authorizeUrl}?client_id=${client_id}&redirect_uri=${redirectUri}&scope=${scopes.join(' ')}`
     }, redirectUrl => {
       if (this.runtime.lastError) {
         console.error(this.runtime.lastError.message);
-        return false;
+        return;
       }
-      console.log('redirectUrl', redirectUrl);
-      redirectUrl && redirectUrl
-        .substr(redirectUrl.indexOf('#') + 1)
-        .split('&')
-        .forEach(query => {
-          if (query.includes('access_token')) {
-            let accessToken = query.split('=')[1];
-            console.log('token is', accessToken);
-            this.storage.set({ accessToken });
-          }
-        });
+      let code = getUrlParameter(redirectUrl, 'code');
+      if (code) {
+        this.getAccessToken({ client_id, code, client_secret });
+      }
     });
+  }
+
+  getAccessToken(payload) {
+    fetch(accessTokenUrl, {
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(resp => resp.json())
+    .then(({ access_token }) => this.storage.set({ access_token }))
+    .catch((err) => console.error(err));
   }
 }
 
