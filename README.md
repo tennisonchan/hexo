@@ -12,7 +12,6 @@ A chrome extension that runs your gist script on page equipped with all powerful
 - [x] Set cookie
 - [x] Inject styles and scripts
 
-
 ## To-Do
 - [x] Fix the "current loaded files"
 - [x] Fix issue of loading removed script on gist

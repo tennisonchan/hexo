@@ -22,7 +22,7 @@ class Background {
     chrome.tabs.onRemoved.addListener(id => delete _ports[id]);
 
     this.eventHandlers = eventHandlers;
-    this.webRequest = new WebRequest();
+    this.webRequest = new WebRequest(chrome);
   }
 
   caller (handlers, { event, data }) {
@@ -85,12 +85,8 @@ popupEventHandlers.reload = function () {
   })
 }
 
-eventHandlers.modifyHeaders = function () {
-  this.webRequest.registerHandler.apply(this, arguments);
-}
-
-eventHandlers.setCookie = function(value) {
-  this.webRequest.addHeader({ name: 'Set-cookie', value });
+eventHandlers.modifyHeader = function () {
+  this.webRequest.modifyHeader.apply(this, arguments);
 }
 
 storage.onchange(['accessToken'], function({ accessToken }) {

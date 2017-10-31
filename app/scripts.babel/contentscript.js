@@ -20,10 +20,6 @@ class ContentScript {
   }
 }
 
-eventHandlers.setCookie = function(headerValue) {
-  _port.postMessage({ event: 'setCookie', data: headerValue });
-}
-
 eventHandlers.inject = inject;
 
 function inject (tag, attrs, target) {
