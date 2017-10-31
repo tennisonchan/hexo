@@ -23,6 +23,7 @@ class Background {
 
     this.eventHandlers = eventHandlers;
     this.webRequest = new WebRequest(chrome);
+    this.storage = storage;
   }
 
   caller (handlers, { event, data }) {

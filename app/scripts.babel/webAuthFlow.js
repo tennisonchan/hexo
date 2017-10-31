@@ -22,7 +22,8 @@ class WebAuthFlow {
     let redirectUri = this.identity.getRedirectURL(provider);
 
     this.identity.launchWebAuthFlow({
-      url: `${authorizeUrl}?client_id=${client_id}&redirect_uri=${redirectUri}&scope=${scopes.join(' ')}`
+      url: `${authorizeUrl}?client_id=${client_id}&redirect_uri=${redirectUri}&scope=${scopes.join(' ')}`,
+      interactive: true
     }, redirectUrl => {
       if (this.runtime.lastError) {
         console.error(this.runtime.lastError.message);
@@ -45,7 +46,7 @@ class WebAuthFlow {
       body: JSON.stringify(payload)
     })
     .then(resp => resp.json())
-    .then(({ access_token }) => this.storage.set({ access_token }))
+    .then(({ access_token: accessToken }) => this.storage.set({ accessToken }))
     .catch((err) => console.error(err));
   }
 }
