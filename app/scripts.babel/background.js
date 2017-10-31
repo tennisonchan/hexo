@@ -3,27 +3,34 @@
 import Gists from 'gists';
 import WebRequest from './webRequest';
 import Storage from './storage';
-import { urlTest, gistTransform } from './userScript';
+import { gistTransform } from './userScript';
 import WebAuthFlow from './webAuthFlow';
 import ENV from './env';
 
-const storage = new Storage(chrome);
 let popupEventHandlers = {};
 let eventHandlers = {};
-let _ports = {};
-let gistsAPI = null;
-let _lastUpdated = null;
-let _filenames = [];
-let _gistsMap = {};
 
 class Background {
-  constructor() {
-    chrome.runtime.onConnect.addListener(this.onRuntimeConnect.bind(this));
-    chrome.tabs.onRemoved.addListener(id => delete _ports[id]);
-
-    this.eventHandlers = eventHandlers;
-    this.webRequest = new WebRequest(chrome);
+  constructor({ storage, webRequest }) {
+    this.ports = {};
+    this.webRequest = webRequest;
     this.storage = storage;
+    this.gistsMap = {};
+    this.accessToken = null;
+    this.lastUpdated = null;
+
+    chrome.runtime.onConnect.addListener(this.onRuntimeConnect.bind(this));
+    chrome.runtime.onInstalled.addListener(this.onInstalled.bind(this));
+    chrome.tabs.onRemoved.addListener(id => delete this.ports[id]);
+
+    storage.onchange(['accessToken'], ({ accessToken }) => this.accessToken = accessToken);
+
+    storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
+    .then(({ accessToken, lastUpdated, gistsMap }) => {
+      this.gistsMap = JSON.parse(gistsMap);
+      this.lastUpdated = lastUpdated;
+      this.accessToken = accessToken;
+    });
   }
 
   caller (handlers, { event, data }) {
@@ -33,56 +40,45 @@ class Background {
 
   onRuntimeConnect (port) {
     console.log('runtime.onConnect: ', port.name);
-    port.postMessage({ event: 'initial' });
 
     if (port.name === 'popup') {
-      _ports['popup'] = port;
+      this.ports.popup = port;
       port.onMessage.addListener(this.caller.bind(this, popupEventHandlers));
+    } else if (port.name === 'content_scripts') {
+      this.ports[port.sender.tab.id] = port;
+      port.onMessage.addListener(this.caller.bind(this, eventHandlers));
     }
+  }
 
-    if (port.name === 'content_scripts') {
-      let { url, id } = port.sender.tab;
-      _ports[id] = port;
-
-      urlTest(_gistsMap, url).forEach(function (id) {
-        let { files, require } = _gistsMap[id];
-
-        if (require) {
-          port.postMessage({ event: 'inject', data: ['script', { src: require }] });
-        }
-
-        files.forEach(function (file) {
-          let { type, raw_url } = file;
-          let url = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
-          if (type.includes('javascript')) {
-            port.postMessage({ event: 'inject', data: ['script', { src: url }] });
-          } else if (type.includes('css')) {
-            port.postMessage({ event: 'inject', data: ['link', { href: url, rel: 'stylesheet' }] });
-          }
-        })
-      });
-
-      port.onMessage.addListener(this.caller.bind(this, this.eventHandlers));
-    }
+  onInstalled(details) {
+    console.log('previousVersion', details.previousVersion);
+    this.storage.get({ accessToken: null })
+    .then(({ accessToken }) => {
+      if (!accessToken) {
+        new WebAuthFlow(chrome, this.storage).launch({
+          client_secret: ENV.client_secret
+        });
+      }
+    });
   }
 }
 
 popupEventHandlers.reload = function () {
   console.log('popup:reload');
   let opts = {};
-  if (_lastUpdated) {
+  let { gistsMap, lastUpdated, accessToken } = this;
+  if (lastUpdated) {
     opts.params = ['since'];
-    opts.since = _lastUpdated;
+    opts.since = lastUpdated;
   }
-  gistsAPI.all(opts, function (_, response) {
+  new Gists({ token: accessToken }).all(opts, (_, response) => {
     console.log('response', response);
-    _gistsMap = Object.assign(_gistsMap, gistTransform(response));
+    gistsMap = Object.assign(gistsMap, gistTransform(response));
 
-    storage
-      .set({
-        gistsMap: JSON.stringify(_gistsMap),
-        lastUpdated: new Date().toISOString(),
-      })
+    this.storage.set({
+      gistsMap: JSON.stringify(gistsMap),
+      lastUpdated: new Date().toISOString(),
+    });
   })
 }
 
@@ -90,27 +86,7 @@ eventHandlers.modifyHeader = function () {
   this.webRequest.modifyHeader.apply(this, arguments);
 }
 
-storage.onchange(['accessToken'], function({ accessToken }) {
-  gistsAPI = new Gists({ token: accessToken });
-});
-
-storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
-  .then(function ({ accessToken, lastUpdated, gistsMap }) {
-    _gistsMap = JSON.parse(gistsMap);
-    _filenames = Object.keys(_gistsMap);
-    _lastUpdated = lastUpdated;
-    gistsAPI = new Gists({ token: accessToken });
-    window.background = new Background();
-  });
-
-chrome.runtime.onInstalled.addListener(details => {
-  console.log('previousVersion', details.previousVersion);
-  storage.get({ accessToken: null })
-  .then(function ({ accessToken }) {
-    if (!accessToken) {
-      new WebAuthFlow(chrome, storage).launch({
-        client_secret: ENV.client_secret
-      });
-    }
-  });
+window.background = new Background({
+  storage: new Storage(chrome),
+  webRequest: new WebRequest(chrome)
 });

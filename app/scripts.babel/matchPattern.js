@@ -24,7 +24,6 @@ function matchPatternToRegExp(pattern) {
     throw new TypeError(`"${ pattern }" is not a valid MatchPattern`);
   }
   const [ , scheme, userInfo, domain, port, path, query, fragment ] = match;
-  console.log('match', match);
   return new RegExp('^(?:'
     + (scheme === '*' ? '(https?|file|ftp|app|chrome-extension)' : escape(scheme)) + ':\\/\\/'
     + (domain === '*' ? '[^\\/]*' : escape(domain).replace(/^\*\./g, '(?:[^\\/]+)?'))

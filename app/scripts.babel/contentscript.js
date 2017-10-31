@@ -1,14 +1,20 @@
 'use strict';
 
-const _port = chrome.runtime.connect({ name: 'content_scripts' });
+import Storage from './storage';
+import { urlTest } from './userScript';
+
+const _port = chrome.runtime.connect({ name: 'content' });
 const eventHandlers = {};
+const storage = new Storage(chrome);
 
 class ContentScript {
-  constructor() {
+  constructor(gistsMap) {
     console.log('ContentScript.init');
+    this.gistsMap = gistsMap;
+
+    inject('script', { src: chrome.extension.getURL('scripts/portal.js') });
 
     _port.onMessage.addListener(this.caller.bind(this, eventHandlers));
-
     window.addEventListener('message', ({ data }) => {
       if(data.source === 'portal') { this.caller(eventHandlers, data) }
     }, false);
@@ -18,9 +24,28 @@ class ContentScript {
     data = data instanceof Array? data : [data];
     typeof handlers[event] === 'function' && handlers[event].apply(this, data);
   }
+
+  postMessage (event, data) {
+    window.postMessage({ source: 'content', event, data }, window.location.origin);
+  }
 }
 
-eventHandlers.inject = inject;
+eventHandlers.init = function () {
+  urlTest(this.gistsMap, window.location.href)
+  .forEach(id => {
+    let { files } = this.gistsMap[id];
+
+    files.forEach(file => {
+      let { type, raw_url } = file;
+      let href = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
+      if (type.includes('javascript')) {
+        this.postMessage('inject', ['script', { src: href }]);
+      } else if (type.includes('css')) {
+        this.postMessage('inject', ['link', { href, rel: 'stylesheet' }]);
+      }
+    })
+  });
+}
 
 function inject (tag, attrs, target) {
   let el = document.createElement(tag);
@@ -48,9 +73,7 @@ eventHandlers.help = function() {
   console.log('help manual');
 }
 
-inject('script', {
-  src: chrome.extension.getURL('scripts/portal.js'),
-  dataset: { methods: JSON.stringify(Object.keys(eventHandlers)) }
-});
-
-new ContentScript();
+storage.get({ gistsMap: '{}' })
+  .then(function ({ gistsMap }) {
+    new ContentScript(JSON.parse(gistsMap));
+  });

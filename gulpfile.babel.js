@@ -9,6 +9,14 @@ import source from 'vinyl-source-stream';
 import es from 'event-stream';
 
 const $ = gulpLoadPlugins();
+const scripts = [
+  'background.js',
+  'chromereload.js',
+  'contentscript.js',
+  'portal.js',
+  'options.js',
+  'popup.js'
+];
 
 gulp.task('extras', () => {
   return gulp.src([
@@ -105,14 +113,7 @@ gulp.task('res', function() {
 });
 
 gulp.task('babel', () => {
-  const tasks = [
-    'background.js',
-    'chromereload.js',
-    'contentscript.js',
-    'portal.js',
-    'options.js',
-    'popup.js',
-  ].map(file => (
+  const tasks = scripts.map(file => (
     browserify({
       entries: `./app/scripts.babel/${file}`,
       debug: true
