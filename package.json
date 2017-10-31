@@ -1,6 +1,5 @@
 {
   "name": "hexo",
-  "private": true,
   "engines": {
     "node": ">=0.8.0"
   },
@@ -12,7 +11,7 @@
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-cache": "^0.4.3",
-    "gulp-chrome-manifest": "git://github.com/tennisonchan/gulp-chrome-manifest#add_web_accessible_resources",
+    "gulp-chrome-manifest": "^0.0.13",
     "gulp-clean-css": "^2.0.3",
     "gulp-eslint": "^2.0.0",
     "gulp-htmlmin": "^1.3.0",

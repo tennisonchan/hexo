@@ -94,6 +94,16 @@ gulp.task('chromeManifest', () => {
   .pipe(gulp.dest('dist'));
 });
 
+gulp.task('res', function() {
+  const manifest = require('./dist/manifest.json');
+  return gulp.src(manifest.web_accessible_resources)
+    .pipe($.if('*.css', $.cleanCss({compatibility: '*'})))
+    .pipe($.if('*.js', $.sourcemaps.init()))
+    .pipe($.if('*.js', $.uglify()))
+    .pipe($.if('*.js', $.sourcemaps.write()))
+    .pipe(gulp.dest('dist'));
+});
+
 gulp.task('babel', () => {
   const tasks = [
     'background.js',
@@ -154,7 +164,7 @@ gulp.task('package', function () {
 
 gulp.task('build', (cb) => {
   runSequence(
-    'clean', 'lint', 'babel', 'chromeManifest',
+    'clean', 'lint', 'babel', 'chromeManifest', 'res',
     ['html', 'images', 'extras'],
     'size', cb);
 });
