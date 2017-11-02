@@ -30,7 +30,8 @@ class Hexo {
     typeof handlers[event] === 'function' && handlers[event].apply(this, data);
   }
 
-  postMessage (event, data) {
+  postMessage (event) {
+    let data = Array.from(arguments).slice(1);
     window.postMessage({ source: 'portal', event, data }, window.location.origin);
   }
 
