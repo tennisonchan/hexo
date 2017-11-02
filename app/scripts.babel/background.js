@@ -25,6 +25,17 @@ class Background {
 
     storage.onchange(['accessToken'], ({ accessToken }) => this.accessToken = accessToken);
 
+    this.webRequest.modifyHeader('content-security-policy', function(header) {
+      header.value = header.value.split(';').map(function (policy) {
+        if (policy.includes('script-src') || policy.includes('style-src')) {
+          policy += ' cdn.rawgit.com';
+        }
+        return policy;
+      }).join(';');
+
+      return header;
+    });
+
     storage.get({ accessToken: null, lastUpdated: null, gistsMap: '{}' })
     .then(({ accessToken, lastUpdated, gistsMap }) => {
       this.gistsMap = JSON.parse(gistsMap);

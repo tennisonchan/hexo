@@ -4,7 +4,7 @@ const defaultOptions = {
   extraInfoSpec: ['blocking', 'responseHeaders'],
   filter: {
     urls: [ '*://*/*' ],
-    types: [ 'script', 'stylesheet' ]
+    types: [ 'main_frame', 'script', 'stylesheet' ]
   }
 };
 
