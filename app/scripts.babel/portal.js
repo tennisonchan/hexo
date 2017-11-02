@@ -1,9 +1,14 @@
 'use strict';
 
-import $ from 'jquery';
+import jquery from 'jquery';
+import lodash from 'lodash';
+import Mustache from 'mustache';
 
 const methods = ['sayHelloWorld', 'help'];
 let eventHandlers = {};
+
+window.$ = jquery.noConflict();
+window._ = lodash.noConflict();
 
 class Hexo {
   constructor() {
@@ -18,8 +23,6 @@ class Hexo {
     methods.forEach((method) => {
       this[method] = this.postMessage.bind(this, method);
     });
-
-    this.$ = $;
   }
 
   caller (handlers, { event, data }) {
@@ -29,6 +32,14 @@ class Hexo {
 
   postMessage (event, data) {
     window.postMessage({ source: 'portal', event, data }, window.location.origin);
+  }
+
+  template (name, data) {
+    let link = document.querySelector('link[rel=import]');
+    let template = link.import.querySelector(name).innerHTML;
+    Mustache.parse(template);
+
+    return Mustache.render(template, data);
   }
 }
 

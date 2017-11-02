@@ -2,6 +2,8 @@
 
 import { matchPatternToRegExp } from './matchPattern';
 
+const allowTypes = ['application/javascript', 'text/css', 'text/html'];
+
 function urlTest(gistsMap, url) {
   return Object.keys(gistsMap).filter(function(key) {
     let { include } = gistsMap[key];
@@ -26,7 +28,7 @@ function extractUserScriptParams(str) {
 }
 
 function isAllowType(type) {
-  return ['application/javascript', 'text/css'].indexOf(type) !== -1;
+  return allowTypes.indexOf(type) !== -1;
 }
 
 function gistTransform (list = []) {
