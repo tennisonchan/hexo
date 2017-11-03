@@ -117,7 +117,7 @@ gulp.task('babel', () => {
     browserify({
       entries: `./app/scripts.babel/${file}`,
       debug: true
-    }).transform('babelify', { presets: ['es2015'] })
+    }).transform('babelify', { presets: ['env'] })
       .bundle()
       .pipe(source(file))
       .pipe(gulp.dest('app/scripts'))
