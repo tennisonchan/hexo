@@ -22,7 +22,6 @@ class Hexo {
     methods.forEach((method) => {
       this[method] = this.postMessage.bind(this, method);
     });
-
   }
 
   caller (fn, { event, data }) {

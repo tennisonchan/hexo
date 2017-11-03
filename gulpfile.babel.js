@@ -65,9 +65,9 @@ gulp.task('styles', () => {
   return gulp.src('app/styles.scss/*.scss')
     .pipe($.plumber())
     .pipe($.sass.sync({
+      errLogToConsole: true,
       outputStyle: 'expanded',
-      precision: 10,
-      includePaths: ['.']
+      includePaths: ['./node_modules/bootstrap/scss']
     }).on('error', $.sass.logError))
     .pipe(gulp.dest('app/styles'));
 });

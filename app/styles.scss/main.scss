@@ -1,5 +1,32 @@
-$padding: 20px;
+@import "bootstrap";
 
-body {
-  padding: $padding;
+.badge {
+    display: inline-block;
+    min-width: 10px;
+    padding: 3px 7px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    background-color: #777;
+    border-radius: 10px;
+}
+
+@media (min-width: 576px) {
+  .hexo-example {
+    padding: 1.5rem;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+  }
+}
+
+.hexo-example {
+  width: 310px;
+  position: absolute;
+  padding: 1rem;
+  margin: 1rem -15px;
 }
