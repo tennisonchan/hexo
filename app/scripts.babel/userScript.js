@@ -38,12 +38,13 @@ function gistTransform (list = []) {
     let allowFiles = Object.keys(files).filter(name => isAllowType(files[name].type));
     let { include, require } = extractUserScriptParams(description);
     if (include && allowFiles.length) {
-      let gist = {};
-      gist.include = include;
-      gist.require = require;
-      gist.files = allowFiles.map(name => {
-        let { filename, raw_url, type } = files[name];
-        return { filename, raw_url, type }
+      let gist = { include, require };
+      gist.files = allowFiles.map(index => {
+        let { filename, raw_url } = files[index];
+        let url = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
+        let [name, ext] = filename.split('.');
+
+        return { name, ext, url };
       });
 
       gistsMap[id] = gist;

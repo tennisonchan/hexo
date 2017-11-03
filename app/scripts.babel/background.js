@@ -83,8 +83,8 @@ popupEventHandlers.reload = function () {
     opts.since = lastUpdated;
   }
   new Gists({ token: accessToken }).all(opts, (_, response) => {
-    console.log('response', response);
     gistsMap = Object.assign(gistsMap, gistTransform(response));
+    console.log('gistsMap', gistsMap);
 
     this.storage.set({
       gistsMap: JSON.stringify(gistsMap),
