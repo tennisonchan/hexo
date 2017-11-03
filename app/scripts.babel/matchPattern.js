@@ -27,6 +27,7 @@ function matchPatternToRegExp(pattern) {
   return new RegExp('^(?:'
     + (scheme === '*' ? '(https?|file|ftp|app|chrome-extension)' : escape(scheme)) + ':\\/\\/'
     + (domain === '*' ? '[^\\/]*' : escape(domain).replace(/^\*\./g, '(?:[^\\/]+)?'))
+    + (port ? (port == '*' ? '(?:\\:.*)?' : ':' + port.replace(/\*/g, '.*')) : '')
     + (path ? (path == '*' ? '(?:\\/.*)?' : (escape(path).replace(/\*/g, '.*'))) : '\\/?')
     + ')$');
 }
