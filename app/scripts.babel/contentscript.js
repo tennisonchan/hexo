@@ -31,20 +31,13 @@ class ContentScript {
 }
 
 eventHandlers.init = function () {
-  urlTest(this.gistsMap, window.location.href)
-  .forEach(id => {
-    let { files } = this.gistsMap[id];
+  let gists = urlTest(this.gistsMap, window.location.href)
+    .reduce((acc, id) => {
+      let { files } = this.gistsMap[id];
+      return acc.concat(files);
+    }, []);
 
-    files.forEach(file => {
-      let { type, raw_url } = file;
-      let href = raw_url.replace('gist.githubusercontent.com', 'cdn.rawgit.com');
-      if (type.includes('javascript')) {
-        this.postMessage('inject', ['script', { src: href }]);
-      } else if (type.includes('css')) {
-        this.postMessage('inject', ['link', { href, rel: 'stylesheet' }]);
-      }
-    })
-  });
+  this.postMessage('bundle', [ gists ]);
 }
 
 function inject (tag, attrs, target) {
