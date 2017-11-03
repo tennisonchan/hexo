@@ -1,21 +1,20 @@
 <!doctype html>
 <html>
-  <script type="text/x-lodash-template" id="template-gist-item">
+  <script type="x-tmpl-mustache" id="template-gist-item">
     <div class="last-updated">
       <label>Last updated:</label>
-      <span><%- lastUpdated %></span>
+      <span>{{lastUpdated}}</span>
     </div>
 
-    <% if (files.length) { %>
-      <% _.forEach(files, function(data) { %>
-        <li>
-          <span class="gist-item__filename"><%- data.filename %></span>
-          <a href="<%- data.raw_url.replace(/raw\/.+/, 'edit') %>" target="_blank">Edit</a>
-        </li>
-      <% }); %>
-    <% } else { %>
+    {{#files}}
+      <li>
+        <span class="gist-item__filename">{{name}}.{{ext}}</span>
+        <a href="{{url.replace(/raw\/.+/, 'edit')}}" target="_blank">Edit</a>
+      </li>
+    {{/files}}
+    {{^files}}
       <span>No file loaded</span>
-    <% } %>
+    {{/files}}
   </script>
 
   <head>

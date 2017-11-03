@@ -1,7 +1,7 @@
 'use strict';
 
-import _ from 'lodash';
 import Storage from './storage';
+import Mustache from 'mustache';
 import { urlTest } from './userScript';
 
 let eventHandlers = {};
@@ -43,8 +43,7 @@ class Popup {
       let files = urlTest(gistsMap, tabs[0].url).reduce(function (acc, id) {
         return acc.concat(gistsMap[id].files);
       }, []);
-      let gistItemTemp = _.template(gistItemEl);
-      gistListEl.innerHTML = gistItemTemp({ files, lastUpdated });
+      gistListEl.innerHTML = Mustache.render(gistItemEl, { files, lastUpdated });
     });
   }
 }
