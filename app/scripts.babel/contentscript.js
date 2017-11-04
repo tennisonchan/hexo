@@ -53,11 +53,12 @@ function getArguments ({ url, name, ext }){
   })[ext];
 }
 
-function inject (tag = 'script', attrs = {}, target = document.body) {
+function inject (tag, attrs = {}, target = document.body) {
+  if (!tag) return false;
   return new Promise(function (resolve, reject) {
     const el = document.createElement(tag);
     attrs.async = true;
-    let addAttrs = function addAttrs (el, props) {
+    function addAttrs (el, props) {
       for (let key in props) {
         let value = props[key];
         if (typeof value === 'object') {
