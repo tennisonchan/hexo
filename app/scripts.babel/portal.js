@@ -34,12 +34,14 @@ class Hexo {
     window.postMessage({ source: 'portal', event, data }, window.location.origin);
   }
 
-  template (name, data) {
+  template (name) {
     let link = document.querySelector('link[rel=import]');
     let template = link.import.querySelector(name).innerHTML;
     Mustache.parse(template);
 
-    return Mustache.render(template, data);
+    return function (data) {
+      return Mustache.render(template, data);
+    }
   }
 
   ready (callback) {
