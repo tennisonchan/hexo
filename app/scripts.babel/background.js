@@ -27,7 +27,7 @@ class Background {
 
     this.webRequest.modifyHeader('content-security-policy', function(header) {
       header.value = header.value.split(';').map(function (policy) {
-        if (policy.includes('script-src') || policy.includes('style-src')) {
+        if (policy.includes('script-src') || policy.includes('style-src') || policy.includes('connect-src')) {
           policy += ' cdn.rawgit.com';
         }
         return policy;

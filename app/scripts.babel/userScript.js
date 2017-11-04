@@ -2,7 +2,7 @@
 
 import { matchPatternToRegExp } from './matchPattern';
 
-const allowTypes = ['application/javascript', 'text/css', 'text/html'];
+const allowTypes = ['application/javascript', 'text/css', 'text/html', 'application/json'];
 
 function urlTest(gistsMap, url) {
   return Object.keys(gistsMap).filter(function(key) {
